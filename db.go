@@ -10,27 +10,30 @@ type DB struct {
 	db gorm.DB
 }
 
-// User in Database
-type User struct {
-	ID           string
-	Conversation Conversation
-	Bots         []Bot
-}
+// Database schema
+type (
+	// User in Database
+	User struct {
+		ID           string
+		Conversation Conversation
+		Bots         []Bot
+	}
 
-// Conversation is each one of the people or groups a bot is talking to
-type Conversation struct {
-	ID                     string
-	TelegramConversationID string
-	PostID                 string
-}
+	// Conversation is each one of the people or groups a bot is talking to
+	Conversation struct {
+		ID                     string
+		TelegramConversationID string
+		PostID                 string
+	}
 
-// Bot s can talk to
-type Bot struct {
-	ID            string
-	TelegramToken string
-	Conversation  []Conversation
-	PostID        string //TODO: think about whether a bot can have different post ids and send different messages to different converations
-}
+	// Bot s can talk to
+	Bot struct {
+		ID            string
+		TelegramToken string
+		Conversation  []Conversation
+		PostID        string //TODO: think about whether a bot can have different post ids and send different messages to different converations
+	}
+)
 
 // SetupDb Connect with postgres
 func SetupDb() (*DB, error) {

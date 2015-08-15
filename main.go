@@ -4,6 +4,7 @@ package main
 var State = struct {
 	*DB
 	*Server
+	Bot *TelegramBot
 }{}
 
 func main() {
@@ -13,6 +14,7 @@ func main() {
 	State.DB = db
 
 	State.Server = SetupServer()
+	State.Bot = NewBot("whatever the token is")
 
 	go State.Server.Run()
 	select {} // Keep the "main thread" busy waiting for nothing so program does not exit

@@ -15,9 +15,11 @@ type Server struct {
 func SetupServer() *Server {
 	router := gin.Default()
 
-	router.GET("/hello/:world", func(c *gin.Context) {
-		name := c.Param("world")
-		c.String(http.StatusOK, "Hello %s", name)
+	router.GET("/post/:id", func(c *gin.Context) {
+		name := c.Param("id")
+
+		success := <-State.Bot.SendMessage("lola", "12345") // Function returns a channel, and we wait for the channel to send something
+		c.String(http.StatusOK, "Hello %s. It went %s", name, success)
 	})
 
 	return &Server{router}
