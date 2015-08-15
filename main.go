@@ -1,19 +1,21 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
 
+// State takes care of storing global dependencies of the project
+var State = struct {
+	*DB
+}{}
+
 func main() {
 
 	db, err := SetupDb()
 	panicOnErr(err)
-	fmt.Println("hey")
-
-	fmt.Println(db)
+	State.DB = db
 
 	router := gin.Default()
 
@@ -25,6 +27,10 @@ func main() {
 	router.Run(":3000")
 }
 
+// HandleError decides what to do with an error. Right now it just panics.
+func HandleError(err error) {
+	panicOnErr(err)
+}
 func panicOnErr(err error) {
 	if err != nil {
 		panic(err)
