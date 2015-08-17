@@ -1,6 +1,10 @@
 package main
 
 import (
+	"fmt"
+	"os"
+	"strings"
+
 	"github.com/jinzhu/gorm"
 	_ "github.com/lib/pq"
 )
@@ -35,7 +39,16 @@ type (
 
 // SetupDb Connect with postgres
 func SetupDb() (*DB, error) {
-	db, err := gorm.Open("postgres", "sslmode=disable")
+	env := os.Environ()
+	host := "localhost"
+	for _, s := range env {
+		arr := strings.Split(s, "=")
+		if arr[0] == "POSTGRES_PORT_5432_TCP_ADDR" {
+			host = arr[1]
+		}
+	}
+
+	db, err := gorm.Open("postgres", fmt.Sprintf("sslmode=disable host=%s", host))
 	db.AutoMigrate(&User{}, &Conversation{}, &Bot{})
 
 	return &DB{db}, err
