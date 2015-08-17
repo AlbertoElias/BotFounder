@@ -17,8 +17,7 @@ func main() {
 	State.Server = SetupServer()
 	State.Bot = NewBot(os.Getenv("FOUNDERBOT_TOKEN"))
 
-	go State.Server.Run()
-	select {} // Keep the "main thread" busy waiting for nothing so program does not exit
+	State.Server.Run()
 }
 
 // HandleError decides what to do with an error. Right now it just panics.

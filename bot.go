@@ -1,8 +1,10 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"net/http"
+	"os"
 	"time"
 )
 
@@ -17,17 +19,24 @@ func NewBot(token string) *TelegramBot {
 }
 
 // Bot creates a bot from Bot database object
-func (b *Bot) Bot() *TelegramBot {
+func (b Bot) Bot() *TelegramBot {
 	return NewBot(b.TelegramToken)
 }
 
-func (b *TelegramBot) request(method string, path string) {
-	url := fmt.Sprintf("https://api.telegram.org/bot/%s/%s", b.Token, path)
+func (b TelegramBot) request(method string, params map[string]string) {
+	var paramsString bytes.Buffer
+	for key, value := range params {
+		paramsString.WriteString(key)
+		paramsString.WriteString("=")
+		paramsString.WriteString(value)
+		paramsString.WriteString("&")
+	}
+	url := fmt.Sprintf("https://api.telegram.org/bot%s/%s?%s", b.Token, method, paramsString.String())
 	http.Get(url)
 }
 
 // SendMessage to the wanted conversation
-func (b *TelegramBot) SendMessage(text string, conversation string) <-chan bool {
+func (b TelegramBot) SendMessage(text string, conversation string) <-chan bool {
 	ch := make(chan bool)
 
 	go func() {
@@ -39,6 +48,8 @@ func (b *TelegramBot) SendMessage(text string, conversation string) <-chan bool 
 }
 
 // SetupWebhook to receive updates from telegram
-func (b *TelegramBot) SetupWebhook() {
-
+func (b TelegramBot) SetupWebhook() {
+	b.request("setWebhook", map[string]string{
+		"url": fmt.Sprintf("http://oururl.com/%s", os.Getenv("FOUNDERBOT_TOKEN")),
+	})
 }
