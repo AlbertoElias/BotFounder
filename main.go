@@ -1,5 +1,7 @@
 package main
 
+import "os"
+
 // State takes care of storing global dependencies of the project
 var State = struct {
 	*DB
@@ -8,13 +10,12 @@ var State = struct {
 }{}
 
 func main() {
-
 	db, err := SetupDb()
 	panicOnErr(err)
 	State.DB = db
 
 	State.Server = SetupServer()
-	State.Bot = NewBot("whatever the token is")
+	State.Bot = NewBot(os.Getenv("FOUNDERBOT_TOKEN"))
 
 	go State.Server.Run()
 	select {} // Keep the "main thread" busy waiting for nothing so program does not exit

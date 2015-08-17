@@ -23,15 +23,13 @@ type (
 	Conversation struct {
 		ID                     string
 		TelegramConversationID string
-		PostID                 string
 	}
 
 	// Bot s can talk to
 	Bot struct {
 		ID            string
 		TelegramToken string
-		Conversation  []Conversation
-		PostID        string //TODO: think about whether a bot can have different post ids and send different messages to different converations
+		Conversations []Conversation
 	}
 )
 
