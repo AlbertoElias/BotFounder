@@ -2,12 +2,19 @@
 Telegram Bot Founder, send messages easily to your bots
 
 ## How to run
-#### Docker
+### Docker
 
-```.sh
+```bash
 
-$ docker run --name postgres -e POSTGRES_USER=root -d postgres
+Using fish?
 
-$ docker build --no-cache=true -t izqui/botfounder .
-$ docker run --link postgres:postgres  izqui/botfounder
+$ eval (docker-machine env default)
+
+Using Bash?
+
+$ eval "$(docker-machine env default)"
+
+$ make postgres
+$ make build
+$ make run
 ```

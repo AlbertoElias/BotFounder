@@ -29,13 +29,20 @@ type (
 		TelegramConversationID string
 	}
 
-	// Bot s can talk to
+	// Bots that have registered with the founder
 	Bot struct {
 		ID            string
 		TelegramToken string
 		Conversations []Conversation
 	}
 )
+
+func (db DB) GetBot(id string) *Bot {
+	return &Bot{
+		ID:            id,
+		TelegramToken: "1232533453sfdgfdg",
+	}
+}
 
 // SetupDb Connect with postgres
 func SetupDb() (*DB, error) {

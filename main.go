@@ -14,9 +14,10 @@ func main() {
 	panicOnErr(err)
 	State.DB = db
 
-	State.Server = SetupServer()
 	State.Bot = NewBot(os.Getenv("FOUNDERBOT_TOKEN"))
+	State.Bot.pollConversations()
 
+	State.Server = SetupServer()
 	State.Server.Run()
 }
 
