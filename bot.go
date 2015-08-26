@@ -18,12 +18,21 @@ type TelegramBot struct {
 // Structure corresponding to all responses
 type TelegramResponse struct {
 	ok     bool
-	result []interface{}
+	result []TelegramUpdate
 }
 
 // Structure corresponding to the "update" response
 type TelegramUpdate struct {
-	first_name string
+	update_id float64
+	message   TelegramMessage
+}
+
+// Structure corresponding to a "message" response
+type TelegramMessage struct {
+	message_id float64
+	text       string
+	date       float64
+	chat       map[string]interface{}
 }
 
 // NewBot creates telegram bot object and makes it ready to talk to the API
@@ -77,7 +86,7 @@ func (b TelegramBot) SetupWebhook() {
 
 // Longpolling of the "getUpdates" method
 func (b TelegramBot) pollConversations() {
-	ticker := time.NewTicker(time.Second * 30)
+	ticker := time.NewTicker(time.Second * 20)
 	updatesChannel := make(chan []byte)
 	go func() {
 		for _ = range ticker.C {
@@ -102,11 +111,12 @@ func parseUpdate(response []byte) *TelegramUpdate {
 	err := json.Unmarshal(response, &tResponse)
 	panicOnErr(err)
 
+	fmt.Println(string(response))
 	fmt.Println(tResponse)
-	fmt.Println(tResponse.ok)
+	// fmt.Println(tResponse.ok)
 	if tResponse.ok == true {
 		var tUpdate TelegramUpdate
-		fmt.Println(tResponse.result)
+		// fmt.Println(tResponse.result)
 		// err := json.Unmarshal(update, &tUpdate)
 		panicOnErr(err)
 
