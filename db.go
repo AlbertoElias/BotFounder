@@ -44,6 +44,18 @@ func (db DB) GetBot(id string) *Bot {
 	}
 }
 
+func (db DB) SetBot(token string) {
+	fmt.Println(token)
+}
+
+func (db DB) SetConversation(ConvId string) {
+	fmt.Println(ConvId)
+}
+
+func (db DB) SetUser(UserId string) {
+	fmt.Println(UserId)
+}
+
 // SetupDb Connect with postgres
 func SetupDb() (*DB, error) {
 	env := os.Environ()
