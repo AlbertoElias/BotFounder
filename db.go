@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"strconv"
 
 	"github.com/jinzhu/gorm"
 	_ "github.com/lib/pq"
@@ -36,6 +37,7 @@ type (
 		ID            int32 `gorm:"primary_key"`
 		UserID        int32 `sql:"index"`
 		TelegramToken string
+		LastUpdate    int
 		Conversations []Conversation
 	}
 
@@ -44,6 +46,11 @@ type (
 		LastUpdate int
 	}
 )
+
+func (db DB) AllTheBots() (bots []Bot) {
+	db.db.Find(&bots)
+	return bots
+}
 
 func (db DB) GetLastUpdate() int {
 	config := new(Config)
@@ -66,14 +73,33 @@ func (db DB) NewUser(id string) User {
 	return user
 }
 
-func (db DB) GetBot(id string) (bot *Bot) {
-	db.db.Where("id = ?", id).First(bot)
+func (db DB) GetBot(id string) *Bot {
+	bot := new(Bot)
+	db.db.Debug().Where("id = ?", id).First(bot)
+	fmt.Println("got bot", bot)
 	return bot
 }
 
-func (db DB) GetBotWithToken(token string) (bot *Bot) {
+func (db DB) GetBotWithToken(token string) *Bot {
+	bot := new(Bot)
 	db.db.Where("telegram_token = ?", token).First(bot)
 	return bot
+}
+
+func (db DB) SetLastUpdateForBot(id string, lastUpdate int) {
+	bot := new(Bot)
+	db.db.Where("id = ?", id).First(bot)
+	bot.LastUpdate = lastUpdate
+	db.db.Save(bot)
+
+}
+
+func (db DB) CreateConversationForBot(botid string, convid string) *Conversation {
+	b, _ := strconv.Atoi(botid)
+
+	conv := new(Conversation)
+	State.DB.db.FirstOrCreate(conv, Conversation{BotID: int32(b), TelegramConversationID: convid})
+	return conv
 }
 
 func (db DB) GetConversation(id string) *Conversation {

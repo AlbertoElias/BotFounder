@@ -28,12 +28,26 @@ func SetupServer() *Server {
 	})
 
 	router.GET("/bot/:botid", func(c *gin.Context) {
-		botId := c.Param("botid")
-		message := c.Query("message")
+		botid := c.Param("botid")
+		bot := State.DB.GetBot(botid)
+		if bot.ID == 0 {
+			c.String(http.StatusNotFound, "Not found bot")
+		} else {
+			c.HTML(http.StatusOK, "sendMessage.tmpl", gin.H{"ok": c.Query("ok"), "postTo": fmt.Sprintf("/bot/%s", botid)})
+		}
+	})
 
-		bot := State.DB.GetBot(botId).Bot()
-		success := <-bot.SendMessage(message, "all") // Function returns a channel, and we wait for the channel to send something
-		c.String(http.StatusOK, "Hello %s. Message is: %s", bot.Token, success)
+	router.POST("/bot/:botid", func(c *gin.Context) {
+		botId := c.Param("botid")
+		message := c.PostForm("message")
+
+		bot := State.DB.GetBot(botId)
+		convs := []Conversation{}
+		State.DB.db.Model(bot).Related(&convs)
+		for _, c := range convs {
+			bot.Bot().SendMessage(message, c.TelegramConversationID)
+		}
+		c.Redirect(http.StatusFound, fmt.Sprintf("/bot/%s?ok=sending...", botId))
 	})
 
 	router.GET("/s/:convid", func(c *gin.Context) {

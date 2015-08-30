@@ -19,22 +19,17 @@ type TelegramBot struct {
 }
 
 // NewBot creates telegram bot object and makes it ready to talk to the API
-func NewBot(token string, ourBot bool) *TelegramBot {
-	bot := &TelegramBot{
-		Token: token,
+func NewBot(token string, id string, lastUpdate int) *TelegramBot {
+	return &TelegramBot{
+		Token:      token,
+		DatabaseID: id,
+		LastUpdate: lastUpdate,
 	}
-
-	if ourBot {
-		bot.DatabaseID = "founder"
-		bot.LastUpdate = State.DB.GetLastUpdate()
-	}
-
-	return bot
 }
 
 // Bot creates a bot from Bot database object
 func (b Bot) Bot() *TelegramBot {
-	return NewBot(b.TelegramToken, false)
+	return NewBot(b.TelegramToken, fmt.Sprintf("%d", b.ID), b.LastUpdate)
 }
 
 func (b TelegramBot) request(method string, params map[string]string) []byte {
@@ -84,8 +79,10 @@ func (b TelegramBot) SetupWebhook() {
 }
 
 // Longpolling of the "getUpdates" method
-func (b *TelegramBot) pollConversations() {
-	ticker := time.NewTicker(time.Second * 3)
+func (b *TelegramBot) PollConversationsEvery(seconds time.Duration) {
+
+	fmt.Println("Starting updates for bot", b.DatabaseID)
+	ticker := time.NewTicker(time.Second * seconds)
 	updatesChannel := make(chan []byte)
 	go func() {
 		for _ = range ticker.C {
@@ -98,42 +95,70 @@ func (b *TelegramBot) pollConversations() {
 			select {
 			case update := <-updatesChannel:
 				messages := b.parseUpdate(update)
-				for _, m := range messages {
-
-					if strings.Contains(m.Text, "start") {
-						converId := fmt.Sprintf("%d", m.Chat.Id)
-						conver := State.DB.GetConversationWithTelegram(converId)
-						fmt.Println(conver)
-						if *conver == *new(Conversation) {
-
-							user := State.DB.NewUser(converId)
-							conver = &user.Conversation
-							fmt.Println(conver)
-						}
-
-						b.SendMessage(fmt.Sprintf("Hey, welcome! You can send messages with this URL: http://localhost:3000/s/%d", conver.ID), converId)
-					} else if strings.Contains(m.Text, "token") {
-						converId := fmt.Sprintf("%d", m.Chat.Id)
-						conver := State.DB.GetConversationWithTelegram(converId)
-						fmt.Println(conver)
-						if *conver == *new(Conversation) {
-							b.SendMessage("Hey, you need to /start before registering your bot.", converId)
-						} else {
-							user := new(User)
-							State.DB.db.Model(conver).Related(user)
-							strs := strings.Split(m.Text, " ")
-							if len(strs) > 1 {
-								token := strs[1]
-								bot := Bot{UserID: user.ID, TelegramToken: token}
-								State.DB.db.FirstOrCreate(&bot, bot)
-								b.SendMessage(fmt.Sprintf("Bot registered! You can make the bot send messages with this URL: http://localhost:3000/bot/%d", bot.ID), converId)
-							}
-						}
-					}
+				if b.DatabaseID == "founder" {
+					b.FounderUpdates(messages)
+				} else {
+					b.Updates(messages)
 				}
 			}
 		}
 	}()
+}
+
+func (b *TelegramBot) Updates(messages []Message) {
+	for _, m := range messages {
+		fmt.Println("update", m)
+		converId := fmt.Sprintf("%d", m.Chat.Id)
+		conver := State.DB.CreateConversationForBot(b.DatabaseID, converId) // Done
+
+		// Send confirmation message to owner
+		user := new(User)
+		userconv := new(Conversation)
+		bot := State.DB.GetBot(b.DatabaseID)
+		fmt.Println("bot", bot)
+		State.DB.db.Model(bot).Related(user)
+		fmt.Println("the user", user)
+		State.DB.db.Model(user).Related(userconv)
+		fmt.Println("now conv", userconv)
+		State.Bot.SendMessage(fmt.Sprintf("New conversation. You can send specific messages using this URL: %d", conver.ID), userconv.TelegramConversationID)
+	}
+}
+
+func (b *TelegramBot) FounderUpdates(messages []Message) {
+	for _, m := range messages {
+
+		if strings.Contains(m.Text, "start") {
+			converId := fmt.Sprintf("%d", m.Chat.Id)
+			conver := State.DB.GetConversationWithTelegram(converId)
+			fmt.Println(conver)
+			if *conver == *new(Conversation) {
+
+				user := State.DB.NewUser(converId)
+				conver = &user.Conversation
+				fmt.Println(conver)
+			}
+
+			b.SendMessage(fmt.Sprintf("Hey, welcome! You can send messages with this URL: http://localhost:3000/s/%d", conver.ID), converId)
+		} else if strings.Contains(m.Text, "token") {
+			converId := fmt.Sprintf("%d", m.Chat.Id)
+			conver := State.DB.GetConversationWithTelegram(converId)
+			fmt.Println(conver)
+			if *conver == *new(Conversation) {
+				b.SendMessage("Hey, you need to /start before registering your bot.", converId)
+			} else {
+				user := new(User)
+				State.DB.db.Model(conver).Related(user)
+				strs := strings.Split(m.Text, " ")
+				if len(strs) > 1 {
+					token := strs[1]
+					bot := Bot{UserID: user.ID, TelegramToken: token}
+					State.DB.db.FirstOrCreate(&bot, bot)
+					b.SendMessage(fmt.Sprintf("Bot registered! You can make the bot send messages with this URL: http://localhost:3000/bot/%d", bot.ID), converId)
+					bot.Bot().PollConversationsEvery(60)
+				}
+			}
+		}
+	}
 }
 
 type UpdateResult struct {
@@ -175,7 +200,15 @@ func (b *TelegramBot) parseUpdate(response []byte) []Message {
 			b.LastUpdate = u.Id
 		}
 	}
-	State.DB.SetLastUpdate(b.LastUpdate)
+	b.SetLastUpdate(b.LastUpdate)
 
 	return messages
+}
+
+func (b *TelegramBot) SetLastUpdate(update int) {
+	if b.DatabaseID == "founder" {
+		State.DB.SetLastUpdate(b.LastUpdate)
+	} else {
+		State.DB.SetLastUpdateForBot(b.DatabaseID, update)
+	}
 }

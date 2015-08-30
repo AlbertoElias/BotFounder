@@ -15,9 +15,13 @@ func main() {
 	State.DB = db
 	defer db.db.Close()
 
-	State.Bot = NewBot(os.Getenv("FOUNDERBOT_TOKEN"), true)
-	State.Bot.pollConversations()
-	play()
+	State.Bot = NewBot(os.Getenv("FOUNDERBOT_TOKEN"), "founder", State.DB.GetLastUpdate())
+	State.Bot.PollConversationsEvery(1)
+
+	for _, bot := range State.DB.AllTheBots() {
+		bot.Bot().PollConversationsEvery(60)
+	}
+
 	State.Server = SetupServer()
 	State.Server.Run()
 }
