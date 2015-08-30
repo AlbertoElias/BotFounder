@@ -1,9 +1,6 @@
 package main
 
-import (
-	"fmt"
-	"os"
-)
+import "os"
 
 // State takes care of storing global dependencies of the project
 var State = struct {
@@ -26,8 +23,10 @@ func main() {
 }
 
 func play() {
-	user := State.DB.NewUser("860578")
-	fmt.Println(user)
+	conver := State.DB.GetConversation("1")
+	user := new(User)
+	State.DB.db.Model(conver).Related(user)
+	println(user.ID)
 }
 
 // HandleError decides what to do with an error. Right now it just panics.

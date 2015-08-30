@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -14,6 +15,7 @@ type Server struct {
 // SetupServer configures and returns a server instance
 func SetupServer() *Server {
 	router := gin.Default()
+	router.LoadHTMLGlob("templates/*")
 
 	router.GET("/bot/:botid/:conversation", func(c *gin.Context) {
 		botId := c.Param("botid")
@@ -36,14 +38,24 @@ func SetupServer() *Server {
 
 	router.GET("/s/:convid", func(c *gin.Context) {
 		convid := c.Param("convid")
-		message := c.Query("message")
 		conver := State.DB.GetConversation(convid)
-
-		if conver == nil {
+		if *conver == *new(Conversation) {
 			c.String(http.StatusNotFound, "Not found conversation")
 		} else {
-			success := <-State.Bot.SendMessage(message, conver.TelegramConversationID)
-			c.String(http.StatusOK, "sent message %s %s", conver.TelegramConversationID, success)
+			c.HTML(http.StatusOK, "sendMessage.tmpl", gin.H{"ok": c.Query("ok"), "postTo": fmt.Sprintf("/s/%s", convid)})
+		}
+	})
+
+	router.POST("/s/:convid", func(c *gin.Context) {
+		convid := c.Param("convid")
+		message := c.PostForm("message")
+		conver := State.DB.GetConversation(convid)
+
+		if *conver == *new(Conversation) {
+			c.String(http.StatusNotFound, "Not found conversation")
+		} else {
+			<-State.Bot.SendMessage(message, conver.TelegramConversationID)
+			c.Redirect(http.StatusFound, fmt.Sprintf("/s/%s?ok=sent", convid))
 		}
 	})
 

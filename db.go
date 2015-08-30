@@ -27,12 +27,14 @@ type (
 	// Conversation is each one of the people or groups a bot is talking to
 	Conversation struct {
 		ID                     int32 `gorm:"primary_key"`
+		BotID                  int32 `sql:"index"`
 		TelegramConversationID string
 	}
 
 	// Bots that have registered with the founder
 	Bot struct {
 		ID            int32 `gorm:"primary_key"`
+		UserID        int32 `sql:"index"`
 		TelegramToken string
 		Conversations []Conversation
 	}
@@ -57,21 +59,32 @@ func (db DB) SetLastUpdate(last int) {
 }
 
 func (db DB) NewUser(id string) User {
-	user := User{Name: "hola", Conversation: Conversation{TelegramConversationID: id}}
+	user := User{Conversation: Conversation{TelegramConversationID: id}}
 	db.db.NewRecord(user)
-	db.db.Debug().Create(&user)
+	db.db.Create(&user)
 
 	return user
 }
 
 func (db DB) GetBot(id string) (bot *Bot) {
-	db.db.Where("id = ?", id).First(&bot)
+	db.db.Where("id = ?", id).First(bot)
+	return bot
+}
+
+func (db DB) GetBotWithToken(token string) (bot *Bot) {
+	db.db.Where("telegram_token = ?", token).First(bot)
 	return bot
 }
 
 func (db DB) GetConversation(id string) *Conversation {
 	con := new(Conversation)
 	db.db.Where("id = ?", id).First(con)
+	return con
+}
+
+func (db DB) GetConversationWithTelegram(id string) *Conversation {
+	con := new(Conversation)
+	db.db.Where("telegram_conversation_id = ?", id).First(con)
 	return con
 }
 
@@ -94,7 +107,7 @@ func SetupDb() (*DB, error) {
 	host := os.Getenv("POSTGRES_PORT_5432_TCP_ADDR")
 
 	db, err := gorm.Open("postgres", fmt.Sprintf("sslmode=disable host=%s", host))
-	db.Debug().AutoMigrate(&User{}, &Conversation{}, &Bot{}, &Config{})
+	db.AutoMigrate(&User{}, &Conversation{}, &Bot{}, &Config{})
 
 	return &DB{db}, err
 }

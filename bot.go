@@ -43,7 +43,6 @@ func (b TelegramBot) request(method string, params map[string]string) []byte {
 		paramsString.WriteString(fmt.Sprintf("%s=%s&", key, value))
 	}
 	url := fmt.Sprintf("https://api.telegram.org/bot%s/%s?%s", b.Token, method, paramsString.String())
-	fmt.Println(url)
 	resp, err := http.Get(url)
 	panicOnErr(err)
 	defer resp.Body.Close()
@@ -100,9 +99,36 @@ func (b *TelegramBot) pollConversations() {
 			case update := <-updatesChannel:
 				messages := b.parseUpdate(update)
 				for _, m := range messages {
-					if strings.Contains(m.Text, "start") {
 
-						b.SendMessage("hello my friend", fmt.Sprintf("%d", m.Chat.Id))
+					if strings.Contains(m.Text, "start") {
+						converId := fmt.Sprintf("%d", m.Chat.Id)
+						conver := State.DB.GetConversationWithTelegram(converId)
+						fmt.Println(conver)
+						if *conver == *new(Conversation) {
+
+							user := State.DB.NewUser(converId)
+							conver = &user.Conversation
+							fmt.Println(conver)
+						}
+
+						b.SendMessage(fmt.Sprintf("Hey, welcome! You can send messages with this URL: http://localhost:3000/s/%d", conver.ID), converId)
+					} else if strings.Contains(m.Text, "token") {
+						converId := fmt.Sprintf("%d", m.Chat.Id)
+						conver := State.DB.GetConversationWithTelegram(converId)
+						fmt.Println(conver)
+						if *conver == *new(Conversation) {
+							b.SendMessage("Hey, you need to /start before registering your bot.", converId)
+						} else {
+							user := new(User)
+							State.DB.db.Model(conver).Related(user)
+							strs := strings.Split(m.Text, " ")
+							if len(strs) > 1 {
+								token := strs[1]
+								bot := Bot{UserID: user.ID, TelegramToken: token}
+								State.DB.db.FirstOrCreate(&bot, bot)
+								b.SendMessage(fmt.Sprintf("Bot registered! You can make the bot send messages with this URL: http://localhost:3000/bot/%d", bot.ID), converId)
+							}
+						}
 					}
 				}
 			}
@@ -143,7 +169,6 @@ func (b *TelegramBot) parseUpdate(response []byte) []Message {
 
 	messages := []Message{}
 
-	fmt.Println(b.LastUpdate)
 	for _, u := range tResponse.Result {
 		if u.Id > b.LastUpdate {
 			messages = append(messages, u.Message)
