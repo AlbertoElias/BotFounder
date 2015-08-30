@@ -120,7 +120,7 @@ func (b *TelegramBot) Updates(messages []Message) {
 		fmt.Println("the user", user)
 		State.DB.db.Model(user).Related(userconv)
 		fmt.Println("now conv", userconv)
-		State.Bot.SendMessage(fmt.Sprintf("New conversation. You can send specific messages using this URL: %d", conver.ID), userconv.TelegramConversationID)
+		State.Bot.SendMessage(fmt.Sprintf("New conversation. You can send specific messages using this URL: %d (not working yet :())", conver.ID), userconv.TelegramConversationID)
 	}
 }
 
@@ -138,7 +138,7 @@ func (b *TelegramBot) FounderUpdates(messages []Message) {
 				fmt.Println(conver)
 			}
 
-			b.SendMessage(fmt.Sprintf("Hey, welcome! You can send messages with this URL: http://localhost:3000/s/%d", conver.ID), converId)
+			b.SendMessage(fmt.Sprintf("Hey, welcome! You can send messages with this URL: http://bot.space.sh/s/%d", conver.ID), converId)
 		} else if strings.Contains(m.Text, "token") {
 			converId := fmt.Sprintf("%d", m.Chat.Id)
 			conver := State.DB.GetConversationWithTelegram(converId)
@@ -153,7 +153,7 @@ func (b *TelegramBot) FounderUpdates(messages []Message) {
 					token := strs[1]
 					bot := Bot{UserID: user.ID, TelegramToken: token}
 					State.DB.db.FirstOrCreate(&bot, bot)
-					b.SendMessage(fmt.Sprintf("Bot registered! You can make the bot send messages with this URL: http://localhost:3000/bot/%d", bot.ID), converId)
+					b.SendMessage(fmt.Sprintf("Bot registered! You can make the bot send messages with this URL: http://bot.space.sh/bot/%d", bot.ID), converId)
 					bot.Bot().PollConversationsEvery(60)
 				}
 			}
