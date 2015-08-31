@@ -19,7 +19,7 @@ func main() {
 	State.Bot.PollConversationsEvery(1)
 
 	for _, bot := range State.DB.AllTheBots() {
-		bot.Bot().PollConversationsEvery(60)
+		bot.Bot().PollConversationsEvery(6)
 	}
 
 	State.Server = SetupServer()

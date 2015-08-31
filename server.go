@@ -47,7 +47,8 @@ func SetupServer() *Server {
 		for _, c := range convs {
 			bot.Bot().SendMessage(message, c.TelegramConversationID)
 		}
-		c.Redirect(http.StatusFound, fmt.Sprintf("/bot/%s?ok=sending...", botId))
+		c.String(http.StatusOK, "ok")
+		//c.Redirect(http.StatusFound, fmt.Sprintf("/bot/%s?ok=sending...", botId))
 	})
 
 	router.GET("/s/:convid", func(c *gin.Context) {
@@ -69,7 +70,8 @@ func SetupServer() *Server {
 			c.String(http.StatusNotFound, "Not found conversation")
 		} else {
 			<-State.Bot.SendMessage(message, conver.TelegramConversationID)
-			c.Redirect(http.StatusFound, fmt.Sprintf("/s/%s?ok=sent", convid))
+			//c.Redirect(http.StatusFound, fmt.Sprintf("/s/%s?ok=sent", convid))
+			c.String(http.StatusOK, "ok")
 		}
 	})
 

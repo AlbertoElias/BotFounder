@@ -109,18 +109,22 @@ func (b *TelegramBot) Updates(messages []Message) {
 	for _, m := range messages {
 		fmt.Println("update", m)
 		converId := fmt.Sprintf("%d", m.Chat.Id)
-		conver := State.DB.CreateConversationForBot(b.DatabaseID, converId) // Done
 
-		// Send confirmation message to owner
-		user := new(User)
-		userconv := new(Conversation)
-		bot := State.DB.GetBot(b.DatabaseID)
-		fmt.Println("bot", bot)
-		State.DB.db.Model(bot).Related(user)
-		fmt.Println("the user", user)
-		State.DB.db.Model(user).Related(userconv)
-		fmt.Println("now conv", userconv)
-		State.Bot.SendMessage(fmt.Sprintf("New conversation. You can send specific messages using this URL: %d (not working yet :())", conver.ID), userconv.TelegramConversationID)
+		if strings.Contains(m.Text, "start") {
+			_ = State.DB.CreateConversationForBot(b.DatabaseID, converId) // Done
+			b.SendMessage("Hola, soy Álvaro Bernal y hablo mucho en Twitter--y fuera de Twitter. A partir de ahora te enviaré un mensaje cada vez que tuiteé para que no te pierdas mi próxima crítica de una web o una review de un bocadillo en Valladolid. Un besito, @abn.", converId)
+
+			// Send confirmation message to owner
+			user := new(User)
+			userconv := new(Conversation)
+			bot := State.DB.GetBot(b.DatabaseID)
+			fmt.Println("bot", bot)
+			State.DB.db.Model(bot).Related(user)
+			fmt.Println("the user", user)
+			State.DB.db.Model(user).Related(userconv)
+			fmt.Println("now conv", userconv)
+			//State.Bot.SendMessage(fmt.Sprintf("New conversation. You can send specific messages using this URL: %d (not working yet :())", conver.ID), userconv.TelegramConversationID)
+		}
 	}
 }
 
