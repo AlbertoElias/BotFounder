@@ -74,7 +74,7 @@ func (b TelegramBot) SendMessage(text string, conversation string) <-chan []byte
 // SetupWebhook to receive updates from telegram. We need an SSL cert though
 func (b TelegramBot) SetupWebhook() {
 	b.request("setWebhook", map[string]string{
-		"url": fmt.Sprintf("http://oururl.com/%s", os.Getenv("FOUNDERBOT_TOKEN")),
+		"url": fmt.Sprintf("http://botcast.me/%s", os.Getenv("FOUNDERBOT_TOKEN")),
 	})
 }
 
@@ -112,7 +112,6 @@ func (b *TelegramBot) Updates(messages []Message) {
 
 		if strings.Contains(m.Text, "start") {
 			_ = State.DB.CreateConversationForBot(b.DatabaseID, converId) // Done
-			b.SendMessage("Hola, soy Álvaro Bernal y hablo mucho en Twitter--y fuera de Twitter. A partir de ahora te enviaré un mensaje cada vez que tuiteé para que no te pierdas mi próxima crítica de una web o una review de un bocadillo en Valladolid. Un besito, @abn.", converId)
 
 			// Send confirmation message to owner
 			user := new(User)
@@ -142,13 +141,13 @@ func (b *TelegramBot) FounderUpdates(messages []Message) {
 				fmt.Println(conver)
 			}
 
-			b.SendMessage(fmt.Sprintf("Hey, welcome! You can send messages with this URL: http://bot.space.sh/s/%d", conver.ID), converId)
+			b.SendMessage(fmt.Sprintf("Hey, welcome! You can send messages with this URL: http://botcast.me/s/%d", conver.ID), converId)
 		} else if strings.Contains(m.Text, "token") {
 			converId := fmt.Sprintf("%d", m.Chat.Id)
 			conver := State.DB.GetConversationWithTelegram(converId)
 			fmt.Println(conver)
 			if *conver == *new(Conversation) {
-				b.SendMessage("Hey, you need to /start before registering your bot.", converId)
+				b.SendMessage("Hey, you need to run /start before registering your bot.", converId)
 			} else {
 				user := new(User)
 				State.DB.db.Model(conver).Related(user)
@@ -157,7 +156,7 @@ func (b *TelegramBot) FounderUpdates(messages []Message) {
 					token := strs[1]
 					bot := Bot{UserID: user.ID, TelegramToken: token}
 					State.DB.db.FirstOrCreate(&bot, bot)
-					b.SendMessage(fmt.Sprintf("Bot registered! You can make the bot send messages with this URL: http://bot.space.sh/bot/%d", bot.ID), converId)
+					b.SendMessage(fmt.Sprintf("Bot registered! You can make the bot send messages with this URL: http://botcast.me/bot/%d", bot.ID), converId)
 					bot.Bot().PollConversationsEvery(60)
 				}
 			}

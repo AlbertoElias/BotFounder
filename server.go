@@ -31,7 +31,7 @@ func SetupServer() *Server {
 		botid := c.Param("botid")
 		bot := State.DB.GetBot(botid)
 		if bot.ID == 0 {
-			c.String(http.StatusNotFound, "Not found bot")
+			c.String(http.StatusNotFound, "Bot not found")
 		} else {
 			c.HTML(http.StatusOK, "sendMessage.tmpl", gin.H{"ok": c.Query("ok"), "postTo": fmt.Sprintf("/bot/%s", botid)})
 		}
@@ -48,7 +48,6 @@ func SetupServer() *Server {
 			bot.Bot().SendMessage(message, c.TelegramConversationID)
 		}
 		c.String(http.StatusOK, "ok")
-		//c.Redirect(http.StatusFound, fmt.Sprintf("/bot/%s?ok=sending...", botId))
 	})
 
 	router.GET("/s/:convid", func(c *gin.Context) {
@@ -70,7 +69,6 @@ func SetupServer() *Server {
 			c.String(http.StatusNotFound, "Not found conversation")
 		} else {
 			<-State.Bot.SendMessage(message, conver.TelegramConversationID)
-			//c.Redirect(http.StatusFound, fmt.Sprintf("/s/%s?ok=sent", convid))
 			c.String(http.StatusOK, "ok")
 		}
 	})

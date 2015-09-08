@@ -114,19 +114,6 @@ func (db DB) GetConversationWithTelegram(id string) *Conversation {
 	return con
 }
 
-/*
-func (db DB) SetBot(token string) {
-	fmt.Println(token)
-}
-
-func (db DB) SetConversation(ConvId string) {
-	fmt.Println(ConvId)
-}
-
-func (db DB) SetUser(UserId string) {
-	fmt.Println(UserId)
-}*/
-
 // SetupDb Connect with postgres
 func SetupDb() (*DB, error) {
 
