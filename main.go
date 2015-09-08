@@ -18,19 +18,12 @@ func main() {
 	State.Bot = NewBot(os.Getenv("FOUNDERBOT_TOKEN"), "founder", State.DB.GetLastUpdate())
 	State.Bot.PollConversationsEvery(1)
 
-	for _, bot := range State.DB.AllTheBots() {
+	for _, bot := range State.DB.GetAllBots() {
 		bot.Bot().PollConversationsEvery(6)
 	}
 
 	State.Server = SetupServer()
 	State.Server.Run()
-}
-
-func play() {
-	conver := State.DB.GetConversation("1")
-	user := new(User)
-	State.DB.db.Model(conver).Related(user)
-	println(user.ID)
 }
 
 // HandleError decides what to do with an error. Right now it just panics.

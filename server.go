@@ -17,14 +17,27 @@ func SetupServer() *Server {
 	router := gin.Default()
 	router.LoadHTMLGlob("templates/*")
 
-	router.GET("/bot/:botid/:conversation", func(c *gin.Context) {
-		botId := c.Param("botid")
-		message := c.Query("message")
-		conversation := c.Param("conversation")
+	router.GET("/bot/:botid/:convid", func(c *gin.Context) {
+		botid := c.Param("botid")
+		convid := c.Param("convid")
+		bot := State.DB.GetBot(botid)
 
-		bot := State.DB.GetBot(botId).Bot()
-		success := <-bot.SendMessage(message, conversation) // Function returns a channel, and we wait for the channel to send something
-		c.String(http.StatusOK, "Hello %s. Message is: %s", bot.Token, success)
+		if bot.ID == 0 {
+			c.String(http.StatusNotFound, "Bot not found")
+		} else {
+			c.HTML(http.StatusOK, "sendMessage.tmpl", gin.H{"ok": c.Query("ok"), "postTo": fmt.Sprintf("/bot/%s/%s", botid, convid)})
+		}
+	})
+
+	router.POST("/bot/:botid/:convid", func(c *gin.Context) {
+		botId := c.Param("botid")
+		convid := c.Param("convid")
+		message := c.PostForm("message")
+		conver := State.DB.GetConversation(convid)
+
+		bot := State.DB.GetBot(botId)
+		bot.Bot().SendMessage(message, conver.TelegramConversationID)
+		c.String(http.StatusOK, "ok")
 	})
 
 	router.GET("/bot/:botid", func(c *gin.Context) {
@@ -50,23 +63,23 @@ func SetupServer() *Server {
 		c.String(http.StatusOK, "ok")
 	})
 
-	router.GET("/s/:convid", func(c *gin.Context) {
+	router.GET("/founderbot/:convid", func(c *gin.Context) {
 		convid := c.Param("convid")
 		conver := State.DB.GetConversation(convid)
 		if *conver == *new(Conversation) {
-			c.String(http.StatusNotFound, "Not found conversation")
+			c.String(http.StatusNotFound, "Conversation not found")
 		} else {
-			c.HTML(http.StatusOK, "sendMessage.tmpl", gin.H{"ok": c.Query("ok"), "postTo": fmt.Sprintf("/s/%s", convid)})
+			c.HTML(http.StatusOK, "sendMessage.tmpl", gin.H{"ok": c.Query("ok"), "postTo": fmt.Sprintf("/founderbot/%s", convid)})
 		}
 	})
 
-	router.POST("/s/:convid", func(c *gin.Context) {
+	router.POST("/founderbot/:convid", func(c *gin.Context) {
 		convid := c.Param("convid")
 		message := c.PostForm("message")
 		conver := State.DB.GetConversation(convid)
 
 		if *conver == *new(Conversation) {
-			c.String(http.StatusNotFound, "Not found conversation")
+			c.String(http.StatusNotFound, "Conversation not found")
 		} else {
 			<-State.Bot.SendMessage(message, conver.TelegramConversationID)
 			c.String(http.StatusOK, "ok")

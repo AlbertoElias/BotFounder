@@ -47,7 +47,7 @@ type (
 	}
 )
 
-func (db DB) AllTheBots() (bots []Bot) {
+func (db DB) GetAllBots() (bots []Bot) {
 	db.db.Find(&bots)
 	return bots
 }
@@ -65,7 +65,7 @@ func (db DB) SetLastUpdate(last int) {
 	db.db.Save(config)
 }
 
-func (db DB) NewUser(id string) User {
+func (db DB) SetUser(id string) User {
 	user := User{Conversation: Conversation{TelegramConversationID: id}}
 	db.db.NewRecord(user)
 	db.db.Create(&user)
@@ -94,8 +94,9 @@ func (db DB) SetLastUpdateForBot(id string, lastUpdate int) {
 
 }
 
-func (db DB) CreateConversationForBot(botid string, convid string) *Conversation {
-	b, _ := strconv.Atoi(botid)
+func (db DB) SetConversationForBot(botid string, convid string) *Conversation {
+	b, err := strconv.Atoi(botid)
+	panicOnErr(err)
 
 	conv := new(Conversation)
 	State.DB.db.FirstOrCreate(conv, Conversation{BotID: int32(b), TelegramConversationID: convid})

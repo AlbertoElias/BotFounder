@@ -5,4 +5,4 @@ build:
 	docker build --no-cache=true -t izqui/botfounder .
 
 run:
-	docker run -e FOUNDERBOT_TOKEN=$(FOUNDERBOT_TOKEN) -p 3000:3000 --name botcast --link postgres:postgres  izqui/botfounder &
+	docker run --detach=true -e FOUNDERBOT_TOKEN=$(FOUNDERBOT_TOKEN) -e FOUNDERBOT_URL=$(FOUNDERBOT_URL) -p 3000:3000 --name botcast --link postgres:postgres izqui/botfounder
