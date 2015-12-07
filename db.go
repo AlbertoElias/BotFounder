@@ -99,6 +99,7 @@ func (db DB) SetConversationForBot(botid string, convid string) *Conversation {
 	panicOnErr(err)
 
 	conv := new(Conversation)
+	// It should just create
 	State.DB.db.FirstOrCreate(conv, Conversation{BotID: int32(b), TelegramConversationID: convid})
 	return conv
 }

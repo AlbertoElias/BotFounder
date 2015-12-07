@@ -107,9 +107,11 @@ func (b *TelegramBot) PollConversationsEvery(seconds time.Duration) {
 
 func (b *TelegramBot) Updates(messages []Message) {
 	for _, m := range messages {
-		if strings.Contains(m.Text, "start") {
-			converId := fmt.Sprintf("%d", m.Chat.Id)
-			conv := State.DB.SetConversationForBot(b.DatabaseID, converId)
+		converId := fmt.Sprintf("%d", m.Chat.Id)
+		var conv *Conversation
+		conv = State.DB.GetConversationWithTelegram(converId)
+		if strings.Contains(m.Text, "start") && *conv == *new(Conversation) {
+			conv = State.DB.SetConversationForBot(b.DatabaseID, converId)
 
 			// Send confirmation message to owner
 			user := new(User)
